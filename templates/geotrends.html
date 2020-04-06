@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block style %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Hover Tip CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='d3-tip.css') }}"/>
+    <!-- UI Slider CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui.structure.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='jquery-ui.theme.min.css') }}"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>  
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+{% endblock %}
+{% block content %}
+    <!-- Load the D3 visualization libraries  -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+    <script src="{{ url_for('static', filename='d3-tip.js') }}"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/r/bs-3.3.5/jqc-1.11.3,dt-1.10.8/datatables.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+            integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+            crossorigin=""></script>
+    <!-- Set default arguments and build year/month list-->
+    <script type="text/javascript">
+        var yearStart = 2010;
+        var yearEnd = 2020;
+        var firstDate = '2010-04'
+        var lastDate = '2020-04'
+        var allDates = [];
+        while(yearStart < yearEnd+1){
+            var tempYear = yearStart
+            monthStart = 1
+            while(monthStart < 13){
+                var tempMonth = ("00" + monthStart).substring(("00" + monthStart).length - 2, ("00" + monthStart).length);
+                var tempDate = yearStart + "-" + tempMonth
+                if (tempDate <= lastDate && tempDate >= firstDate) {allDates.push(yearStart + "-" + tempMonth);};
+                monthStart++
+            };
+            yearStart++;
+        }
+    </script>
+        <div class="container"> 
+            <h2 align="center" style="padding-top:30px;">Geographic Trends</h2><br />  
+            <p style="padding-top:20px;">These visualizations demonstrate where technology conferences and similar events have taken place over the last ten years. London has consistently been a primary location for technology conferences, followed closely by New York City and San Fransisco. Based on the sun burst chart you can see that the United States has a significant amount of technology conferences distributed across numerous cities and states. California alone has nearly as many events as the United Kingdom. The visualizations below show the top 50 cities around the world for technology conferences and can be animated to show how these have shifted over time.
+            </p>
+        </div>
+        <!-- Chart Area -->
+        <div class="container"> 
+            {{bardata | safe}}
+        </div>
+        <br />  
+      <div class="jumbotron1">
+        <div class="container">
+          <h3 id="title_div" style="text-align:center;padding-top:5px;"></h3>
+          <div class="mr-md-3 pt-3 px-3 pt-md-5 px-md-5 svg-container" id="total_div"></div>
+          <p style="text-align:right;padding-top:5px;">** Based on unique conferences</p>
+          <div class="row" style="text-align:center;padding-top:5px;vertical-align:middle">
+			<div class="col-xs-6 col-md-4" style="vertical-align:middle;padding-top:15px;">
+				<button id="play-button" class="btn btn-primary btn-lg">Play</button>
+				<button id="reset-button" class="btn btn-secondary btn-lg">Reset</button>
+			</div>
+			<div class="col-xs-6 col-md-4" style="vertical-align:middle">
+				<div id="slider-div">
+					<label>Month: <span id="month">2010-04</span></label>
+					<div id="date-slider"></div>
+				</div>
+			</div>
+			<div class="col-xs-6 col-md-4" style="vertical-align:middle">
+				<div id="slider-div-2">
+					<label>Number of Cities to Show: <span id="n">20</span></label>
+					<div id="n-slider"></div>
+				</div>
+			</div>
+		  </div>
+        </div>
+      </div>
+	  <!-- Leaflet Map Area -->
+	  <div class="container"> 
+	  <h3 align="center">City Conference Map</h2><br />
+	  <div id="mapid" style="height:600px;width:1100px;align:center;padding-top:5px;padding-bottom:5px;"></div>
+      </div>
+	  <hr> 
+	  <!-- DataTable Area -->
+	  <div class="container">  
+		<h3 align="center">City Conference Source Data</h2><br />  
+		<table id="data-table" class="display" style="width:100%">
+			<thead>
+				<tr>
+					<th>month</th>
+					<th>city</th>
+					<th>country</th>
+					<th>latitude</th>
+					<th>longitude</th>
+					<th>records</th>
+					<th>total</th>
+				</tr>
+			</thead>
+			<tfoot>
+				<tr>
+					<th>month</th>
+					<th>city</th>
+					<th>country</th>
+					<th>latitude</th>
+					<th>longitude</th>
+					<th>records</th>
+					<th>total</th>
+				</tr>
+			</tfoot>
+		</table>
+      </div>  
+{% endblock %}
+{% block javascript %}
+    <script>document.getElementById("trends-button").className += " active";</script>
+    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='jquery-ui.min.js') }}"></script>
+    <!-- Custom JS -->
+    <script type="text/javascript" src="{{ url_for('static', filename='localities.js') }}"></script>
+    <script>
+        // Set bounds to New York, New York
+        var bounds = [
+        [-50, -150], // Southwest coordinates
+        [70, 150]  // Northeast coordinates
+        ];
+        var mymap = L.map('mapid', {
+                    center: [40, 0],
+                    zoom: 2,
+                    minZoom: 2,
+                    maxZoom: 6,
+                    maxBounds: bounds,
+                    maxBoundsViscosity: 1.0 // Sets bounds as max
+                    });
+        //CartoDB layer names: light_all / dark_all / light_nonames / dark_nonames
+            var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+            });
+            layer.addTo(mymap);
+            var logo = L.control({position: 'bottomright'});
+        logo.onAdd = function(mymap){
+            var maplabeldiv = L.DomUtil.create('div', 'myclass');
+            maplabeldiv.innerHTML='<h3><span id="mapmonth">2010-4</span></h3>';
+            return maplabeldiv;
+        }
+        logo.addTo(mymap);
+            var layerGroup = L.layerGroup().addTo(mymap);
+    </script>
+    <script>
+        // Creates a DataTable from source JSON
+            $(document).ready(function() {
+            $('#data-table').DataTable( {
+                ajax: {
+                    url: "{{ url_for('static', filename='localities.json') }}",
+                    dataSrc: ''
+                },
+                "columns": [
+                    { "data": "month" },
+                    { "data": "locality" },
+                    { "data": "country" },
+                    { "data": "latitude" },
+                    { "data": "longitude" },
+                    { "data": "records" },
+                    { "data": "total" }
+                ]
+            } );
+        } );
+        </script> 
+{% endblock %}

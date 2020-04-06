@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block style %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+  <script type="text/javascript" src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+{% endblock %}
+{% block content %}
+  <div class="container" style="padding-top:30px;">  
+    <h3 align="center">Event Search</h2><br />  
+    <div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ mydatadict['name'] }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+        {{ mydatadict['locality'] }} {{ mydatadict['country'] }}, {{ mydatadict['startDate'] }} - {{ mydatadict['endDate'] }}
+        </h6>
+        <p class="card-text">{{ mydatadict['description'] }}</p>
+        <h6 class="card-subtitle mb-2">Venue Location</h6>
+        <p class="card-text"><small>
+        {% if mydatadict['venuename'] != "" %}{{ mydatadict['venuename'] }} - {% endif %}
+        {% if mydatadict['streetAddress'] != "" %} {{ mydatadict['streetAddress'] }} - {% endif %}
+        {% if mydatadict['locality'] != "" %} {{ mydatadict['locality'] }} - {% endif %}
+        {% if mydatadict['region'] != "" %} {{ mydatadict['region'] }} - {% endif %}
+        {{ mydatadict['country_name'] }}
+        </small></p>
+        {% if mydatadict['category'] != "" %}
+        <h6 class="card-subtitle mb-2">Categories</h6>
+        <p class="card-text"><small>{{ mydatadict['category'] }}</small></p>
+        {% endif %}
+        <div role="separator" class="dropdown-divider" style="padding-top:5px;padding-bottom:5px;"></div>
+        <div class="d-flex align-content-around flex-wrap">
+          <a href="{{ mydatadict['eventurl'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More information on the web</a>
+          {% if mydatadict['locality'] %}
+          <a href="../search/?q={{ mydatadict['locality'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More in {{ mydatadict['locality'] }}</a>
+          {% endif %}
+          <a href="../search/?q={{ mydatadict['startDate'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {{ mydatadict['startDate'] }}</a>
+          {% if mydatadict['organizer'] %}
+          <a href="../search/?q={{ mydatadict['organizer'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More from {{ mydatadict['organizer'] }}</a>
+          {% endif %}
+          {{ catbutton|safe }}
+        </div>
+    </div>
+    </div>
+  </div>  
+
+  <!-- Leaflet Map Area -->
+  <div class="container" style="padding-top:30px;"> 
+    <h3 align="center">Event Map</h2><br />
+    <div id="mapid" style="height:700px;align:center;padding-top:5px;padding-bottom:5px;"></div>
+  </div>
+{% endblock %}
+{% block javascript %}
+    <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script>var data = {{ mydata|safe }};</script>
+    <script>
+        // Set bounds
+        var bounds = [
+        [ {{ mydatadict['latitude'] - 1 }}, {{ mydatadict['longitude'] - 1 }} ], // Southwest coordinates
+        [ {{ mydatadict['latitude'] + 1 }}, {{ mydatadict['longitude'] + 1 }} ]  // Northeast coordinates
+        ];
+        var mymap = L.map('mapid', {
+              center: [40, 0],
+              zoom: 8,
+              minZoom: 1,
+              maxZoom: 15,
+              maxBounds: bounds,
+              maxBoundsViscosity: .8 // Sets bounds as max
+              });
+        //CartoDB layer names: light_all / dark_all / light_nonames / dark_nonames
+            var layer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
+            });
+        layer.addTo(mymap);
+        var logo = L.control({position: 'bottomright'});
+        logo.onAdd = function(mymap){
+          var maplabeldiv = L.DomUtil.create('div', 'myclass');
+          maplabeldiv.innerHTML='<h3><span id="testlabel">Showing ' + data.length + ' Events</span></h3>';
+          return maplabeldiv;
+        }
+        logo.addTo(mymap);
+         var layerGroup = L.layerGroup().addTo(mymap);
+
+         var arrayLength = data.length;
+        for (var i = 0; i < arrayLength; i++) {
+          // Create circles on map
+          temp_obj = data[i]
+          var circle = L.circleMarker([Number(temp_obj.latitude), 
+                      Number(temp_obj.longitude)], {
+            fillOpacity: 0.5,
+            radius: 5
+          }).addTo(layerGroup).bindPopup("<b>Name:</b> " + temp_obj.name + 
+                        "<br><b>category:</b> <a href=/search?q=" + temp_obj.category + ">" + temp_obj.category + "</a>" + 
+                        "<br><b>date:</b> " + temp_obj.startDate.slice(0,10))
+            .on('click', function (e) {this.openPopup();});
+        };
+	  </script>
+{% endblock %}

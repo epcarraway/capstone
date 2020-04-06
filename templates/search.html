@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block style %}
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/cal-heatmap/3.3.10/cal-heatmap.css" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content %}
+  <div class="container" style="padding-top:30px;">  
+    <h3 align="center">Event Search</h2><br />  
+    <form style="padding-bottom:30px;">
+      <div class="form-group">
+        <input name="q" type="search" class="form-control" id="InputSearch1" aria-describedby="searchHelp" placeholder="Enter search" value="{{ q|safe }}">
+        <small id="searchHelp" class="form-text text-muted">Enter search term or phrase.</small>
+      </div>
+      <div class="form-row align-items-center">
+        <div class="col-sm-2 my-1">
+          <input name="limit" type="text" class="form-control" id="limit" placeholder="Enter search" value="{{ limit|safe }}">
+          <small id="limitHelp" class="form-text text-muted">Results limit.</small>
+          <input name="bounds" type="hidden" class="form-control" id="bounds" placeholder="Enter search" value="{{ bounds|safe }}">
+        </div>
+        <div class="col-auto my-1">
+          <div class="form-check" style="padding-bottom:10px;">
+            <input name="extents" type="checkbox" class="form-check-input" id="Check2" {{ extents|safe }}>
+            <label class="form-check-label" for="Check2">Search Map Extents</label>
+          </div>
+        </div>
+      </div>   
+      <span style="padding-top:10px;"></span>
+      <button type="submit" class="btn btn-primary">Submit</button>       
+    </form>
+    <table id="data-table" class="display compact" style="width:100%" data-order='[[ 3, "asc" ]]'>
+      <thead>
+        <tr>
+          <th>name</th>
+          <th>shortname</th>
+          <th>category</th>
+          <th>startdate</th>
+          <th>latitude</th>
+          <th>longitude</th>
+        </tr>
+      </thead>
+    </table>
+  </div>  
+
+  <!-- Leaflet Map Area -->
+  <div class="container" style="padding-top:30px;"> 
+    <h3 align="center">Event Map</h2><br />
+    <div id="mapid" style="height:700px;align:center;padding-top:5px;padding-bottom:5px;">
+    </div>
+  </div>
+
+  <!-- Timeline Area -->
+  <div class="container" style="padding-top:30px;"> 
+    <h3 align="center">Event Calendar</h2><br />
+    <div id="calendarid" style="align:center;padding-top:5px;padding-bottom:5px; max-width:1200px;"></div>
+    <button id="calendarid-previous-selector" style="margin-bottom: 10px;" class="btn"><</button>
+    <button id="calendarid-next-selector" style="margin-bottom: 10px;" class="btn">></button>
+    </div>
+  </div>
+
+  <!-- Chart Area -->
+  <div class="container"> 
+    <h3 align="center">Result Charts</h2><br />
+    {{bardata | safe}}
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("search-button").className += " active";</script>
+  <script type="text/javascript" src="//d3js.org/d3.v3.min.js"></script>
+  <script type="text/javascript" src="//cdn.jsdelivr.net/cal-heatmap/3.3.10/cal-heatmap.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+  <script>var data = {{ mydata|safe }};</script>
+  <script>
+      $(document).ready(function() {
+              var buttonCommon = {
+                exportOptions: {
+                    format: {
+                        body: function ( data, row, column, node ) {
+                            // Strip $ from salary column to make it numeric
+                            return column === 5 ?
+                                data.replace( /[$,]/g, '' ) :
+                                data;
+                        }
+                    }
+                }
+            };
+            $('#data-table').DataTable( {
+              searching: false,
+              language: {
+                searchPlaceholder: "Filter results",
+                search: "",
+              },
+              'pageLength': 10,
+              'lengthMenu': [ 10, 25, 50, 75, 100 ], 
+              responsive: true,
+              data: data,
+              columns: [
+                      { "data": "display" },
+                      { "data": "name" },
+                      { "data": "category" },
+                      { "data": "startDate" },
+                      { "data": "latitude" },
+                      { "data": "longitude" }
+              ],
+              columnDefs: [
+                      {
+                          "targets": [ 1, 4, 5 ],
+                          "visible": false
+                      },
+                      {
+                          'targets': 2,
+                          'render': function(data, type, full, meta){
+                              if(type === 'display'){
+                                  data = data.substring(0, 50).replace(/\|/g, ', ');
+                              }
+                              return data;
+                          }
+                      },
+                      {
+                          'width': 100, 
+                          'targets': 3,
+                          'render': function(data, type, full, meta){
+                              if(type === 'display'){
+                                  data = data.substring(0, 10);
+                              }
+                              return data;
+                          }
+                      }]
+          } );
+      } );
+  </script>
+  <script>
+      // Set bounds
+      var bounds = [
+      {{ lbounds|safe }}  // Southwest coordinates, Northeast coordinates
+      ];
+      var mymap = L.map('mapid', {
+            center: [40, 0],
+            zoom: 2,
+            minZoom: 1,
+            maxZoom: 15,
+            maxBounds: [[-50, -190], [70, 190]],
+            maxBoundsViscosity: .8 // Sets bounds as max
+            });
+      mymap.fitBounds(bounds);
+      //CartoDB layer names: light_all / dark_all / light_nonames / dark_nonames
+      var layer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
+      });
+      layer.addTo(mymap);
+      var logo = L.control({position: 'bottomright'});
+      logo.onAdd = function(mymap){
+        var maplabeldiv = L.DomUtil.create('div', 'myclass');
+        maplabeldiv.innerHTML='<h4><span id="testlabel">Showing ' + data.length + ' Events</span></h4>';
+        return maplabeldiv;
+      }
+      logo.addTo(mymap);
+      var logo2 = L.control({position: 'bottomleft'});
+      logo2.onAdd = function(mymap){
+        var maplabeldiv2 = L.DomUtil.create('div', 'myclass2');
+        maplabeldiv2.innerHTML='<h4><span id="testlabel2">' 
+        + mymap.getCenter()["lat"].toPrecision(5).toString() + ', '
+        + mymap.getCenter()["lng"].toPrecision(5).toString() + '</span></h4>';
+        return maplabeldiv2;
+      }
+      logo2.addTo(mymap);
+        var layerGroup = L.layerGroup().addTo(mymap);
+
+        var arrayLength = data.length;
+      for (var i = 0; i < arrayLength; i++) {
+        // Create circles on map
+        temp_obj = data[i]
+        var circle = L.circleMarker([Number(temp_obj.latitude), 
+                    Number(temp_obj.longitude)], {
+          fillOpacity: 0.5,
+          radius: 5
+        }).addTo(layerGroup).bindPopup("<b>Name:</b> " + temp_obj.name + 
+                      "<br><b>url:</b> <a href='/e/" + temp_obj.contourURL + "'>/e/" + temp_obj.contourURL + "</a>" + 
+                      "<br><b>date:</b> " + temp_obj.startDate.slice(0,10))
+          .on('click', function (e) {this.openPopup();});
+      }
+      mymap.on("moveend", function () {
+              document.getElementById("testlabel2").innerHTML = '<h4><span id="testlabel2">' + 
+              mymap.getCenter()["lat"].toPrecision(5).toString() + ', ' + 
+              mymap.getCenter()["lng"].toPrecision(5).toString() + '</span></h4>';
+              document.getElementById("bounds").value = 
+              mymap.getBounds()["_southWest"]["lat"].toPrecision(7).toString() + ' ' + 
+              mymap.getBounds()["_southWest"]["lng"].toPrecision(7).toString() + ' ' + 
+              mymap.getBounds()["_northEast"]["lat"].toPrecision(7).toString() + ' ' + 
+              mymap.getBounds()["_northEast"]["lng"].toPrecision(7).toString();
+            });
+  </script>
+  <script>var data2 = {{ mydata2|safe }};</script>
+  <script>
+    function drawCalendar() {
+            document.getElementById("calendarid").innerHTML = '';
+            var cal = new CalHeatMap();
+            cal.init({
+                itemSelector: "#calendarid",
+                domain: "month",
+                subDomain: "day",
+                data: data2,
+                start: Date.now(),
+                weekStartOnMonday: false,
+                domainGutter: 3,
+                cellSize: 12,
+                cellPadding: 3,
+                range: Math.min(13, parseInt(window.innerWidth / 110)),
+                legend: {{legend_split|safe}},
+                legendColors: null,
+                legendCellSize: 18,
+                legendCellPadding: 3, 
+                legendVerticalPosition: "center",
+                legendOrientation: "vertical",
+                legendHorizontalPosition: "right", 
+                itemName: "event",
+                tooltip: true,
+                nextSelector: "#calendarid-next-selector",
+                previousSelector: "#calendarid-previous-selector",
+            });
+    };
+    // Draw for the first time to initialize.
+    drawCalendar();
+    // Redraw based on the new size whenever the browser window is resized.
+    window.addEventListener("resize", drawCalendar);
+  </script>
+{% endblock %}

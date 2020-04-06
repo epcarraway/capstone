@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block style %}
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="container">  
+      <h2 align="center" style="padding-top:30px;">Event Schedule Trends</h2><br />  
+      <p style="padding-top:20px;">These visualizations demonstrate when technology conferences and similar events are scheduled, both by time of year and day of week. Visualizing the data this way helps confirm coverage of our data collection, as well as validity of date extraction. What we observe is that events occur during the week more often than on the weekend, but Monday start days are not typical. We could hypothesize this is likely to allow for travel to the venues during the week and to maximize participation. In addition, we can observe that Fall and Spring are popular seasons for technology conferences, while Summer and Winter have fewer events. This could be because more workers take vacation during the Summer or Winter and travel costs are higher and less reliable, respectively.
+      </p>
+      <!-- Chart Area -->
+      <div class="container"> 
+        {{bardata | safe}}
+      </div>
+    <p><img src="{{ url_for('static', filename='calheatmap.png') }}" class="img-fluid" alt="Calendar Heat Map"></p>
+    <p style="padding-top:20px;">We can also observe a higher density of events in the last year and a half, although this is likely due to gaps in historic data available on the sites we used going further back. In addition, for 2020, we see numerous events through March and April, but many of these were scheduled and identified but are likely to have been later cancelled due the Coronavirus pandemic. Similarly we have significantly fewer events in later 2020, but they may not have been scheduled yet or may be delayed until next year. We need to work with the data we have to help make predictions about industry technology trends.
+      </p>
+    </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("trends-button").className += " active";</script>
+{% endblock %}

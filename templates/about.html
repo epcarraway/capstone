@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container" style="padding-top:30px;">
+    <h3>Objective</h3>
+    <p>This is a conference aggregation and analysis project on Azure prepared as part of the George Washington University Data Science Masters Program. This project seeks to address multiple challenges associated with finding, aggregating and analyzing conferences. This project also seeks to help visualize trends in technology and security conferences and identify potentially disruptive technologies.
+    </p>
+    <h3>Conference Challenges</h3>
+    <ul>
+      <li>Numerous conferences to keep track of</li>
+      <li>Difficulty tracking conference dates and locations</li>
+      <li>Low density topic conferences that are harder to find</li>
+      <li>Emerging and disruptive technologies</li>
+      <li>Challenge identifying low cost or local events</li>
+    </ul>
+    <h3>Tools Used</h3>
+    <p>The project is presented in the form of an interactive <a href="../">HTML page</a> using Python Flask, Bootstrap, CSS, client-side JavaScript such as JQuery, D3.js, Leaflet, DataTable and other applicable visualization libraries. It also leveraged a custom scraping and retrieval framework with Python, Pandas, BeautifulSoup, Selenium and the Requests library for retrieval and processing. Source code management leveraged GitHub and Visual Studio Code.
+    </p>
+    <h3>Architecture</h3>
+    <p>This project leveraged Azure infrastructure for multiple elements, including the main backend database architecture, which used <a href="https://azure.microsoft.com/en-us/services/cosmos-db/">Cosmos DB</a>. Cosmos DB is a multi-modal NoSQL database as a service (DBaaS) which allows for rapid prototyping of new datastructures and quick secure integration with other systems. For the hosting and integration of the Python Flask, we used <a href="https://azure.microsoft.com/en-us/services/app-service/web/">Azure Web Apps</a> which is a fully-managed web hosting platform supporting continuous integration/continuous deployment (CI/CD), application monitoring and metrics.
+    </p>
+    <p><img src="{{ url_for('static', filename='architecture.png') }}" class="img-fluid" alt="Architecture"></p>
+    </div>
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("about-button").className += " active";</script>
+{% endblock %}

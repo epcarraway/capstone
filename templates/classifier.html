@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block style %}
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content %}
+  <div class="container" style="padding-top:30px;padding-left:30px;padding-right:30px;">
+    <h1 style="text-align:center;padding-top:50px;vertical-align:middle">Text Classification</h1>
+    <p style="padding-top:20px;">This page allows for testing and demonstrating the text classifier used to infer categories of conference events based on conference titles and descriptions. The current model uses TF-IDF and Logistic Regression with 50 possible labels. Submitting a conference description will output a prediction as well as probabilites for the top ten possible categories.
+    </p>
+    <form action="/classifier">
+        <div class="form-group">
+            <textarea name="q" class="form-control" id="q" rows="3" type="text" style="padding-top:10px;padding-left:10px;padding-right:10px;padding-bottom:10px;margin:5px;" placeholder="Enter Description">{{ q|safe }}</textarea>
+            <div class="d-flex align-content-around flex-wrap align-self-center" style="margin-top:20px;">
+              <button id="q" class="btn btn-success my-2 my-sm-0 btn-sm align-self-center" type="submit">Submit custom description</button>
+            </div>
+        </div>
+    </form>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title align-self-center">Classifier Results</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+        {{ q|safe }}
+        </h6>
+        <p class="card-text">{{ mydata|safe }}</p>
+        {{bardata | safe}}
+      </div>
+    </div>
+    <span style="padding-top:10px;"></span>
+    <div class="card" style="margin-top:20px;">
+      <div class="card-body">
+        <h5 class="card-title align-self-center">Examples</h5>
+        {{ catbutton|safe }}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("about-button").className += " active";</script>
+{% endblock %}

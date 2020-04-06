@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block style %}
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="container">  
+      <h2 align="center" style="padding-top:30px;">Categorical Trends</h2><br />  
+      <p style="padding-top:20px;">These visualizations demonstrate the categories that our conference data falls into. Using a custom function, we can plot any categorical data such as venue name, organizer and technology topic.
+      </p>
+      <!-- Chart Area -->
+      <div class="container"> 
+        {{bardata | safe}}
+      </div>
+      <p style="padding-top:20px;">We can see that IoT is a popular topic of conferences while Microsoft and a number of coworking spaces like WeWork are popular venues for tech events.
+      </p>
+    </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("trends-button").className += " active";</script>
+{% endblock %}

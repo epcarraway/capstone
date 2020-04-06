@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block style %}
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block content %}
+    <div class="container">  
+      <h2 align="center" style="padding-top:30px;">Technology Conference Categories Over Time</h2><br />  
+      <p style="padding-top:20px;">This visualization shows the number of technology conference events by category over time and is meant to help track the adoption of different technology trends. Across the board there is a sharp uptick of events in the three years, and the expectation is we are partially limited by access to historic data from conference sites. 2020 is also not included because the data is incomplete and expected to be heavily impacted by the Coronavirus pandemic. To help visualize this data more effectively, the plot is interactive and can be logarithmically scaled to better fit the overall track of events or displayed as stacked areas to avoid having overlapping lines.
+      </p>
+      <p style="padding-top:20px;">The conclusions we could draw from this visualization is that Internet of Things (IoT) and Artificial Intelligence / Machine Learning (AI/ML) have surpassed other technology sectors in adoption. One technology that peaked and is seeing lower event emphasis is Blockchain, which had a peak in 2018 followed by a significant drop. While Blockchain as a whole is still seeing adoption as a key enabling technology in many sectors, the drop from the 2018 peak could be largely in part due to the collapse of Bitcoin prices that year. Another observation from this visualization is that Industrial Engineering as a topic of technology conferences rose sharply in 2019, which could be tied to the rise of other technologies being adopted in that sector, such as Industrial IoT and autonomous industrial systems.
+      </p>
+      <!-- Chart Area -->
+      <div class="container"> 
+        {{bardata | safe}}
+      </div>
+      <!-- DataTable Area -->
+      <table id="data-table-log" class="display compact" style="width:100%" data-order='[[ 0, "desc" ]]'>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Category</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+      </table>
+    </div>  
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("trends-button").className += " active";</script>
+  <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+  <script>var table_json = {{ table_json|safe }};</script>
+  <script>
+    $(document).ready(function() {
+      var buttonCommon = {
+        exportOptions: {
+            format: {
+                body: function ( data, row, column, node ) {
+                    // Strip $ from salary column to make it numeric
+                    return data;
+                }
+            }
+        }
+    };
+    $('#data-table-log').DataTable( {
+      language: {
+        searchPlaceholder: "Filter results",
+        search: "",
+      },
+      'pageLength': 10,
+      'lengthMenu': [ 10, 25, 50, 75, 100 ], 
+      responsive: true,
+      data: table_json,
+      columns: [
+          { "data": "year" },
+          { "data": "category" },
+          { "data": "count" }
+      ],
+      dom: 'Bfrtip',
+      buttons: [
+          $.extend( true, {}, buttonCommon, {
+              extend: 'copyHtml5'
+          } ),
+          $.extend( true, {}, buttonCommon, {
+              extend: 'excelHtml5'
+          } )
+        ]
+      } );
+    } );
+  </script>
+{% endblock %}

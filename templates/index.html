@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container" style="padding-top:30px;">
+    <h1 style="text-align:center;padding-top:50px;vertical-align:middle">Capstone Conference Aggregation and Analysis Project</h1>
+    <p style="padding-top:20px;">This is a conference aggregation and analysis project on Azure prepared as part of the George Washington University Data Science Masters Program. This project seeks to address multiple challenges associated with finding, aggregating and analyzing conferences. This project also seeks to help visualize trends in technology and security conferences and identify potentially disruptive technologies.
+    </p>
+  </div>
+  <hr>
+  </div>
+  <div class="jumbotron1">
+    <div class="container">
+      <div class="row" style="text-align:center;padding-top:50px;vertical-align:middle">
+      <div class="col-xs-6 col-md-4" style="vertical-align:middle;padding-top:15px;">
+        <a href="../search" class="btn btn-primary btn-lg btn-block" role="button">Conference Search</a>
+        <p style="vertical-align:middle;padding-top:15px;">Search through conferences using a number of criteria.</p>
+      </div>
+      <div class="col-xs-6 col-md-4" style="vertical-align:middle;padding-top:15px;">
+        <a href="../trends" class="btn btn-primary btn-lg btn-block" role="button">Conference Trends</a>
+        <p style="vertical-align:middle;padding-top:15px;">Explore trends in technology and other conference topics.</p>
+      </div>
+      <div class="col-xs-6 col-md-4" style="vertical-align:middle;padding-top:15px;">
+        <a href="../about" class="btn btn-primary btn-lg btn-block" role="button">About</a>
+        <p style="vertical-align:middle;padding-top:15px;">Click to learn more about this capstone project.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("home-button").className += " active";</script>
+{% endblock %}
