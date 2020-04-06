@@ -19,7 +19,6 @@ import plotly.express as px
 import plotly
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
-from IPython.display import display, HTML
 
 pal = ['#48c9b0', '#5499c7', '#ec7063', '#cd6155', '#82FFAB', '#FFC300', 
        '#f39c12', '#e74c3c', '#8e44ad', '#16a085', '#27ae60', '#d35400',

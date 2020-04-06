@@ -9,3 +9,4 @@ Flask-Caching
 requests
 nltk
 beautifulsoup4
+python-Levenshtein
