@@ -9,7 +9,6 @@ import json
 import pickle
 from datetime import datetime
 from urllib.parse import unquote
-from nltk.corpus import stopwords
 import plotly
 import plotly.graph_objs as go
 import requests
