@@ -6,6 +6,7 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 import re
 import Levenshtein as lev
+import pandas as pd
 
 # Specify column names for input text and category, as well as number of key terms to return.
 DESC_COLUMN = 'description'
@@ -307,3 +308,72 @@ def create_classifier_examples(df, catlist):
         j = df2[(df2.new_category == i) & (df2.description.str.len() > 300) & (df2.description_alpha_ratio > .9)].sort_values(by=['new_category_proba'], ascending=False).description.to_list()[0]
         classifier_examples[i] = j
     return classifier_examples
+
+
+def summarize_cities(df, n=100, start='2010-04', end='2020-04'):
+    '''Function to summarize tables based on cities and months'''
+    df2 = df[(df['locality'] != '') & (df['country'] != '')][['name', 'locality', 'country', 'latitude', 'longitude', 'startDate']].copy()
+    df2['month'] = df2.startDate.apply(lambda x: x[:7])
+    df2['locality'] = df2.locality.apply(lambda x: str(x).split('City of ')[-1])
+    df2 = df2.drop_duplicates(subset=['name', 'locality', 'country', 'startDate'], keep='first')[['name', 'locality', 'country', 'latitude', 'longitude', 'month']].copy()
+    df2['locality'] = df2['locality'] + ', ' + df2['country']
+    dfg = df2[['name', 'locality']].groupby(['locality']).count()
+    dfg.columns = ['records']
+    dfg = dfg.sort_values(by=['records'],ascending=False)
+    dfg = dfg.head(n)
+    citylist = dfg.index.tolist()
+    df2 = df2[df2['locality'].isin(citylist)].copy()
+    df2 = df2[(df2['month'] >= start) & (df2['month'] <= end)].copy()
+    dfg = df2.groupby(['locality', 'country', 'month']).agg(
+            {'name': "count"}
+        )
+    dfg = dfg.reset_index().copy()
+    dfg.columns = ['locality', 'country', 'month', 'records']
+    dfg2 = df2.groupby(['locality', 'country']).agg(
+            {
+                'latitude': ["mean"],
+                'longitude': ["mean"]
+            }
+        )
+    dfg2 = dfg2.reset_index().copy()
+    dfg2.columns = ['locality', 'country', 'latitude', 'longitude']
+    dfg = pd.merge(dfg, dfg2, on=['locality', 'country'], how='left').copy()
+    return dfg
+
+
+def get_all_month_total_counts(df):
+    '''Function to fill in empty month counts'''
+    # Find aggregated counts for each month from all resource categories
+    df = df[['locality','month', 'records']].copy()
+    dfg = df[['locality','month', 'records']].groupby(['month']).agg({'records': ['sum']}).reset_index()
+    dfg.columns = ['month','records']
+    dfg['locality'] = 'All'
+    dfg = dfg[['month','locality','records']]
+    df = pd.concat([df, dfg], ignore_index=True)
+    # Aggregate running totals for each category
+    month_list = list(set(df['month'].tolist()))
+    types_list = df[['locality']].drop_duplicates().to_dict('records')
+    df2 = pd.DataFrame(columns=['month', 'locality', 'records', 'total'])
+    for types in types_list:
+        for month in month_list:
+            total = df[(df['month'] <= month) & 
+                      (df['locality'] == types['locality'])]['records'].sum()
+            dfp2 = df[(df['month'] == month) & 
+                      (df['locality'] == types['locality'])].copy()
+            if len(dfp2) == 0:
+                dfp2 = pd.DataFrame([[month, types['locality'], 0]], 
+                                    columns=['month', 'locality', 'records'])
+            dfp2['total'] = total
+            # Concatenated back to working Dataframe
+            df2 = pd.concat([df2, dfp2], ignore_index=True)
+    df2 = df2.astype({"records": int,"total": int})
+    # Find aggregated counts for all months from each categories
+    dfg = df2.groupby(['locality']).agg({'records': ['sum'],
+                                            'total': ['max']}).reset_index()
+    dfg.columns = ['locality','records','total']
+    dfg['month'] = 'All'
+    dfg = dfg[['month','locality','records','total']]
+    # Concatenated back to working Dataframe
+    df2 = pd.concat([df2, dfg], ignore_index=True)
+    df2 = df2.sort_values(by='total', ascending=False)
+    return df2

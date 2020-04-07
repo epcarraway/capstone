@@ -46,7 +46,7 @@ Harrington, L. (2018, November 20). 5 Disruptive Technologies Shaping Our Future
 
 National Research Council. (2010). Persistent forecasting of disruptive technologies: report 2. Washington: National Academies Press.
 
-Paap, J., & Katz, R. (2004). Anticipating disruptive innovation. IEEE Engineering Management Review, 32(4), 74–85. doi: 10.1109/emr.2004.25138 
+Paap, J., & Katz, R. (2004). Anticipating disruptive innovation. IEEE Engineering Management Review, 32(4), 74–85. doi: 10.1109/emr.2004.25138
 
 Panetta, K. (2019, October 21). Gartner Top 10 Strategic Technology Trends for 2020. Retrieved February 10, 2020, from <https://www.gartner.com/smarterwithgartner/gartner-top-10-strategic-technology-trends-for-2020/>
 

@@ -18,3 +18,4 @@ cosmos-backup-*.json
 *checkpoint.ipynb*
 df_*.p
 notebooks/*localities.json
+notebooks/calheatmap.png
