@@ -8,6 +8,7 @@ import os
 import json
 import pickle
 from datetime import datetime
+from datetime import timedelta
 from urllib.parse import unquote
 import plotly
 import plotly.graph_objs as go
@@ -115,6 +116,7 @@ def showsearch():
     if limit > 10000:
         limit = 10000
     extents = request.args.get("extents", "off")
+    historic = request.args.get("historic", "off")
     bounds = request.args.get("bounds", "")
     qbounds = ''
     lbounds = '[-50, -190], [70, 190]'
@@ -129,6 +131,14 @@ def showsearch():
             qbounds = ' AND (s.latitude BETWEEN {} AND {}) AND (s.longitude BETWEEN {} AND {})'.format(
                 lat1, lat2, lon1, lon2)
             lbounds = '[{}, {}], [{}, {}]'.format(lat1, lon1, lat2, lon2)
+        except Exception:
+            bounds = ''
+    else:
+        extents = ''
+    if historic != 'off':
+        historic = 'checked'
+        try:
+            dtg = (datetime.now() + timedelta(days=-3650)).strftime("%Y-%m-%d %H:%M:%S")
         except Exception:
             bounds = ''
     else:
@@ -188,7 +198,7 @@ def showsearch():
     # Create stacked bar charts sorted by count
     locationbardata = barcols(dfg, [col], 'count', 20)
     return render_template('search.html', mydata=mydata, mydata2=mydata2, legend_split=legend_split, 
-                           q=q, extents=extents, lbounds=lbounds, limit=limit, bardata=catbardata+locationbardata)
+                           q=q, extents=extents, historic=historic, lbounds=lbounds, limit=limit, bardata=catbardata+locationbardata)
 
 
 @app.route('/classifier')

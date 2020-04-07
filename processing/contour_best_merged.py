@@ -46,7 +46,7 @@ olddtg = (datetime.now() + timedelta(days=-3650)).strftime("%Y-%m-%d %H:%M:%S")
 futuredtg = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d %H:%M:%S")
 
 # Query these items in SQL
-query = {'query': 'SELECT * \
+query = {'query': 'SELECT s.name, s.startDate, s.endDate, s.description, s.category, s.eventurl, s.organizer, s.venuename, s.streetAddress, s.locality, s.region, s.country, s.zipcode, s.latitude, s.longitude, s.dtg, s.scriptname \
         FROM server s WHERE s.endDate >= "' + olddtg + '" AND s.endDate <= "' + futuredtg + '" AND s.latitude <> "" AND \
         CONTAINS(s.scriptname, "_detailed.py") \
         ORDER BY s.dtg DESC'}
@@ -536,9 +536,9 @@ if savedplots['plotly_html'] != '':
 else:
     print('Something went wrong... No data stored...')
 
-
 # Insert new data in Cosmos DB
 df_both['scriptname'] = 'contour_best_merged.py'
+df_both = df_both.fillna('').copy()
 insert_list = df_both.to_dict('records')
 t1 = 0
 for item in insert_list:
@@ -553,7 +553,8 @@ for item in insert_list:
                 item1 = client.CreateItem(
                     os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), item)
             except Exception:
-                print('insert failed...')
+                print('insert failed...showing record...')
+                print(item)
         t1 += 1
         if t1 % 100 == 0:
             elapsed_time = int(time.time() - start_time)
