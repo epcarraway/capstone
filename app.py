@@ -48,6 +48,12 @@ def about():
     return render_template('about.html')
 
 
+@app.route('/training')
+@cache.cached(timeout=600)
+def training():
+    return render_template('training.html')
+
+
 @app.route('/e/<event>')
 @cache.cached(timeout=600, query_string=True)
 def showevent(event):
