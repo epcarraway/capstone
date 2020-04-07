@@ -16,6 +16,11 @@ else:
     workingdir = workingdir + '\\'
 sys.path.append(workingdir)
 
+# Define cutoff date to remove old event dates
+olddtg = (datetime.now() + timedelta(days=-10 * 3650)
+          ).strftime("%Y-%m-%d %H:%M:%S")
+print(olddtg)
+
 # load configuration json and establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
                                     'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
@@ -220,11 +225,6 @@ for item in flist:
     print(str(tc) + ': ' + str(item['eventurl']))
     client.DeleteItem(item['_self'], {'partitionKey': item['dtg']})
 
-# Define cutoff date to remove old event dates
-olddtg = (datetime.now() + timedelta(days=-10 * 365)
-          ).strftime("%Y-%m-%d %H:%M:%S")
-print(olddtg)
-
 # Define syntax to query for old events
 query = {'query': 'SELECT s.eventurl, s.dtg, s._self \
             FROM server s WHERE (s.scriptname = "eventbright_event_search.py" OR s.scriptname = "10times_event_search.py" \
@@ -360,20 +360,72 @@ for item in iter(result_iterable):
 print(str(len(resultlist)) + ' results retrieved from Cosmos DB detailed')
 event_search = resultlist.copy()
 
-# Convert results dictionary to dataframe
-df = pd.DataFrame(event_search)
-print(str(len(df)) + ' rows in converted dataframe. deduping...')
-df.sort_values(by=['dtg'], ascending=False, inplace=True)
-df['dupe'] = df.duplicated(subset=['eventurl', 'scriptname'])
-delete_list = df[df['dupe'] == 1].to_dict(orient='records')
+if len(event_search) > 1:
+    # Convert results dictionary to dataframe
+    df = pd.DataFrame(event_search)
+    print(str(len(df)) + ' rows in converted dataframe. deduping...')
+    df.sort_values(by=['dtg'], ascending=False, inplace=True)
+    df['dupe'] = df.duplicated(subset=['eventurl', 'scriptname'])
+    delete_list = df[df['dupe'] == 1].to_dict(orient='records')
 
-# Delete duplicate detailed results from Cosmos DB
-tc = 0
-for item in delete_list:
-    tc += 1
-    print(str(tc) + ': ' + str(item['eventurl']))
-    client.DeleteItem(item['_self'], {'partitionKey': item['dtg']})
+    # Delete duplicate detailed results from Cosmos DB
+    tc = 0
+    for item in delete_list:
+        tc += 1
+        print(str(tc) + ': ' + str(item['eventurl']))
+        client.DeleteItem(item['_self'], {'partitionKey': item['dtg']})
 
-print(str(tc) + ' rows deleted...')
+    print(str(tc) + ' rows deleted...')
+
+print('Running search to remove duplicate merged events in Cosmos')
+
+# Query these items in SQL
+query = {'query': 'SELECT s.dtg, s._self, s.eventurl, s.scriptname \
+        FROM server s WHERE CONTAINS(s.scriptname, "best_merged.py")\
+        ORDER BY s.dtg DESC'}
+
+# load configuration json and establish connection to CosmosDB
+client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
+                                    'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
+
+options = {}
+options['enableCrossPartitionQuery'] = True
+options['maxItemCount'] = -1
+options['MaxDegreeOfParallelism'] = -1
+
+# Execute query and iterate over results
+print('Fetching data from Cosmos DB')
+result_iterable = client.QueryItems(
+    os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), query, options)
+resultlist = []
+t1 = 0
+for item in iter(result_iterable):
+    try:
+        resultlist += [item]
+        t1 += 1
+        if t1 % 1000 == 0:
+            elapsed_time = int(time.time() - start_time)
+            print(str(t1) + ' records retrieved... ' + str(elapsed_time) + ' seconds elapsed.')
+    except Exception:
+        pass
+print(str(len(resultlist)) + ' results retrieved from Cosmos DB detailed')
+event_search = resultlist.copy()
+
+if len(event_search) > 1:
+    # Convert results dictionary to dataframe
+    df = pd.DataFrame(event_search)
+    print(str(len(df)) + ' rows in converted dataframe. deduping...')
+    df.sort_values(by=['dtg'], ascending=False, inplace=True)
+    df['dupe'] = df.duplicated(subset=['eventurl', 'scriptname'])
+    delete_list = df[df['dupe'] == 1].to_dict(orient='records')
+
+    # Delete duplicate detailed results from Cosmos DB
+    tc = 0
+    for item in delete_list:
+        tc += 1
+        print(str(tc) + ': ' + str(item['eventurl']))
+        client.DeleteItem(item['_self'], {'partitionKey': item['dtg']})
+
+    print(str(tc) + ' rows deleted...')
 
 print('Script complete')
