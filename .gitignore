@@ -7,7 +7,6 @@ event*.json
 event*.csv
 perdiem*.csv
 categories.csv
-*categorizer*.png
 *model*.p
 *vectorizer*.p
 *tokenizer*.p
