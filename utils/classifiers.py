@@ -2,6 +2,8 @@
 from azure.storage.blob import BlobServiceClient
 import os
 import pickle
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords
 
 
