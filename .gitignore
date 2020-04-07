@@ -18,3 +18,5 @@ cosmos-backup-*.json
 df_*.p
 notebooks/*localities.json
 notebooks/calheatmap.png
+localities.json
+calheatmap.png

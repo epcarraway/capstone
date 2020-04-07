@@ -30,6 +30,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # Get local folder and add project folder to PATH
 start_time = time.time()
 workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
 parentdir = os.path.dirname(workingdir)
 sys.path.insert(0, parentdir)
 
