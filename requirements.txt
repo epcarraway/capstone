@@ -10,3 +10,8 @@ requests
 nltk
 beautifulsoup4
 python-Levenshtein
+matplotlib
+numpy
+sklearn
+seaborn
+keras
