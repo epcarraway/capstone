@@ -1,4 +1,5 @@
 # Import modules
+from azure.storage.blob import BlobServiceClient
 from datetime import datetime
 from datetime import timedelta
 import os
@@ -477,11 +478,7 @@ def polar_day_month(df, div=True):
     return output
 
 
-# Import modules
-from azure.storage.blob import BlobServiceClient
-import os
-import pickle
-from nltk.corpus import stopwords
+
 
 
 def load_static_cal_map():
