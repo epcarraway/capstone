@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="embed-responsive embed-responsive-16by9">
+    <iframe class="embed-responsive-item" src="{{ url_for('static', filename='processingembedded.html') }}" allowfullscreen></iframe>
+  </div>
+{% endblock %}
+{% block javascript %}
+  <script>document.getElementById("about-button").className += " active";</script>
+{% endblock %}

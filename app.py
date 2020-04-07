@@ -54,6 +54,18 @@ def training():
     return render_template('training.html')
 
 
+@app.route('/processing')
+#@cache.cached(timeout=600)
+def processing():
+    return render_template('processing.html')
+
+
+@app.route('/processingembedded')
+#@cache.cached(timeout=600)
+def processingembedded():
+    return render_template('processingembedded.html')
+
+
 @app.route('/e/<event>')
 @cache.cached(timeout=600, query_string=True)
 def showevent(event):
