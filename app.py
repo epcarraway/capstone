@@ -55,15 +55,9 @@ def training():
 
 
 @app.route('/processing')
-#@cache.cached(timeout=600)
+@cache.cached(timeout=600)
 def processing():
     return render_template('processing.html')
-
-
-@app.route('/processingembedded')
-#@cache.cached(timeout=600)
-def processingembedded():
-    return render_template('processingembedded.html')
 
 
 @app.route('/e/<event>')
@@ -113,13 +107,13 @@ def showevent(event):
 def showsearch():
     dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     q = request.args.get("q", "")
-    limit = request.args.get("limit", 100)
+    limit = request.args.get("limit", 1000)
     try:
         limit = int(limit)
     except Exception:
-        limit = 100
-    if limit > 5000:
-        limit = 5000
+        limit = 1000
+    if limit > 10000:
+        limit = 10000
     extents = request.args.get("extents", "off")
     bounds = request.args.get("bounds", "")
     qbounds = ''
