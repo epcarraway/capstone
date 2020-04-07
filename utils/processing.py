@@ -289,6 +289,7 @@ def summarize_table(df, col, delimiter='|'):
     )
     dfg.columns = ['count', 'first_seen', 'last_seen']
     dfg = dfg.reset_index().sort_values('count', ascending=False)
+    dfg = dfg[dfg[col] != ''].copy()
     return dfg
 
 
