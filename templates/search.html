@@ -193,7 +193,7 @@
           radius: 5
         }).addTo(layerGroup).bindPopup("<b>Name:</b> " + temp_obj.name + 
                       "<br><b>Location:</b> " + temp_obj.locality + " " + temp_obj.country + 
-                      "<br><b>url:</b> <a href='/e/" + temp_obj.contourURL + "'>/e/" + temp_obj.contourURL + "</a>" + 
+                      "<br><b>Link:</b> <a href='/e/" + temp_obj.contourURL + "'>/e/" + temp_obj.contourURL + "</a>" + 
                       "<br><b>Date:</b> " + temp_obj.startDate.slice(0,10))
           .on('click', function (e) {this.openPopup();});
       }
