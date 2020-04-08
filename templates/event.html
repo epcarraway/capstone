@@ -98,7 +98,7 @@
             radius: 5
           }).addTo(layerGroup).bindPopup("<b>Name:</b> " + temp_obj.name + 
                         "<br><b>category:</b> <a href=/search?q=" + 
-                        encodeURI(temp_obj.category.split(" - ").slice(0, 1).join(" ")) + ">" + 
+                        encodeURIComponent(temp_obj.category.split(" - ").slice(0, 1).join(" ")) + ">" + 
                         temp_obj.category.split(" - ").slice(0, 1).join(" ") + "</a>" + 
                         "<br><b>date:</b> " + temp_obj.startDate.slice(0,10))
             .on('click', function (e) {this.openPopup();});

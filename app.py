@@ -10,10 +10,10 @@ import pickle
 from datetime import datetime
 from datetime import timedelta
 from urllib.parse import unquote
+from urllib.parse import quote
 import plotly
 import plotly.graph_objs as go
 import requests
-import urllib.parse
 import uuid
 from utils.processing import clean_text, summarize_table
 from utils.visualizations import barcols, load_static_cal_map
@@ -95,7 +95,7 @@ def showevent(event):
             for i in item['category'].split(' - '):
                 if len(i) > 1:
                     catbutton += '<a href="../search/?q={}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {}</a>\n'.format(
-                        i, i)
+                        quote(i), i)
             mydatadict += [item]
         except Exception:
             pass
@@ -108,6 +108,7 @@ def showevent(event):
 def showsearch():
     dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     q = request.args.get("q", "")
+    print(q)
     limit = request.args.get("limit", 1000)
     try:
         limit = int(limit)
