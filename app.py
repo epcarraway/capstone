@@ -183,20 +183,25 @@ def showsearch():
     legend_split = []
     for i in range(1, 5):
         legend_split += [i * a1]
-    df = pd.DataFrame(mydata)
-    mydata = json.dumps(mydata)
-    mydata2 = json.dumps(mydata2)
-    # Summarize categories
-    col = 'category'
-    dfg = summarize_table(df, col)
-    # Create stacked bar charts sorted by count
-    catbardata = barcols(dfg, [col], 'count', 20)
-    # Summarize localities
-    col = 'location'
-    df['location'] = df.locality + ', ' + df.country
-    dfg = summarize_table(df, col)
-    # Create stacked bar charts sorted by count
-    locationbardata = barcols(dfg, [col], 'count', 20)
+    if len(mydata) > 0:
+        df = pd.DataFrame(mydata)
+        mydata = json.dumps(mydata)
+        mydata2 = json.dumps(mydata2)
+        # Summarize categories
+        col = 'category'
+        dfg = summarize_table(df, col)
+        # Create stacked bar charts sorted by count
+        catbardata = barcols(dfg, [col], 'count', 20)
+        # Summarize localities
+        col = 'location'
+        df['location'] = df.locality + ', ' + df.country
+        dfg = summarize_table(df, col)
+        # Create stacked bar charts sorted by count
+        locationbardata = barcols(dfg, [col], 'count', 20)
+    else:
+        catbardata = ''
+        locationbardata = ''
+        mydata2 = ''
     return render_template('search.html', mydata=mydata, mydata2=mydata2, legend_split=legend_split, 
                            q=q, extents=extents, historic=historic, lbounds=lbounds, limit=limit, bardata=catbardata+locationbardata)
 
