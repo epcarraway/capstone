@@ -128,7 +128,7 @@
                           'targets': 2,
                           'render': function(data, type, full, meta){
                               if(type === 'display'){
-                                  data = data.substring(0, 50).replace(/\|/g, ', ');
+                                  data = data.split("|").slice(0, 5).join(', ');
                               }
                               return data;
                           }
