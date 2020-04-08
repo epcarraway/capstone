@@ -29,11 +29,11 @@
         <div class="d-flex align-content-around flex-wrap">
           <a href="{{ mydatadict['eventurl'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More information on the web</a>
           {% if mydatadict['locality'] %}
-          <a href="../search/?q={{ mydatadict['locality'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More in {{ mydatadict['locality'] }}</a>
+          <a href="../search?q={{ mydatadict['locality'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More in {{ mydatadict['locality'] }}</a>
           {% endif %}
-          <a href="../search/?q={{ mydatadict['startDate'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {{ mydatadict['startDate'] }}</a>
+          <a href="../search?q={{ mydatadict['startDate'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {{ mydatadict['startDate'] }}</a>
           {% if mydatadict['organizer'] %}
-          <a href="../search/?q={{ mydatadict['organizer'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More from {{ mydatadict['organizer'] }}</a>
+          <a href="../search?q={{ mydatadict['organizer'] }}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More from {{ mydatadict['organizer'] }}</a>
           {% endif %}
           {{ catbutton|safe }}
         </div>

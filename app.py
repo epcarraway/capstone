@@ -94,7 +94,7 @@ def showevent(event):
                 item['category'] = ''
             for i in item['category'].split(' - '):
                 if len(i) > 1:
-                    catbutton += '<a href="../search/?q={}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {}</a>\n'.format(
+                    catbutton += '<a href="../search?q={}" class="btn btn-outline-primary btn-sm" style="margin:5px;">More on {}</a>\n'.format(
                         quote(i), i)
             mydatadict += [item]
         except Exception:
@@ -104,6 +104,7 @@ def showevent(event):
 
 
 @app.route('/search/')
+@app.route('/search')
 @cache.cached(timeout=600, query_string=True)
 def showsearch():
     dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
