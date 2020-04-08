@@ -72,13 +72,23 @@
         var logo = L.control({position: 'bottomright'});
         logo.onAdd = function(mymap){
           var maplabeldiv = L.DomUtil.create('div', 'myclass');
-          maplabeldiv.innerHTML='<h3><span id="testlabel">Showing ' + data.length + ' Events</span></h3>';
+          maplabeldiv.innerHTML='<h5><span id="testlabel">Showing ' + data.length + ' Events</span></h5>';
           return maplabeldiv;
         }
         logo.addTo(mymap);
          var layerGroup = L.layerGroup().addTo(mymap);
 
          var arrayLength = data.length;
+        var logo2 = L.control({position: 'bottomleft'});
+        logo2.onAdd = function(mymap){
+          var maplabeldiv2 = L.DomUtil.create('div', 'myclass2');
+          maplabeldiv2.innerHTML='<h5><span id="testlabel2">' 
+          + mymap.getCenter()["lat"].toPrecision(4).toString() + ', '
+          + mymap.getCenter()["lng"].toPrecision(4).toString() + '</span></h5>';
+          return maplabeldiv2;
+        }
+        logo2.addTo(mymap);
+          var layerGroup = L.layerGroup().addTo(mymap);
         for (var i = 0; i < arrayLength; i++) {
           // Create circles on map
           temp_obj = data[i]
