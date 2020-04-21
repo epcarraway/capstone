@@ -239,8 +239,6 @@ def showclassifier():
     bardata = ''
     if q != '':
         try:
-            # Load model
-            model, vectorizer = load_model()
             # Transform and vectorize text
             transformed = vectorizer.transform([clean_text(q)])
             # Generate prediction
@@ -376,4 +374,6 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 if __name__ == '__main__':
+    # Load model
+    model, vectorizer = load_model()
     app.run()
