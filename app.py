@@ -26,6 +26,9 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 app = Flask(__name__, template_folder='templates')
 cache.init_app(app)
 
+# Load model
+model, vectorizer = load_model()
+
 SESSION = requests.Session()
 
 
@@ -374,6 +377,4 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 if __name__ == '__main__':
-    # Load model
-    model, vectorizer = load_model()
     app.run()
