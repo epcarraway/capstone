@@ -11,8 +11,8 @@ import socket
 import requests
 
 # Set parameters
-TIME_LIMIT = 120
-WAIT_TIME = 3600
+TIME_LIMIT = 3600
+WAIT_TIME = 4
 
 # Get local folder and add project folder to PATH
 start_time = time.time()

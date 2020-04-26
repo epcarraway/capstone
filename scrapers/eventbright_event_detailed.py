@@ -1,23 +1,30 @@
 # Import modules
+import azure.cosmos.cosmos_client as cosmos_client
+from datetime import datetime
+from bs4 import BeautifulSoup
 import socket
 import requests
 import os
-from datetime import datetime
 import time
 import random
-from bs4 import BeautifulSoup
 import json
-import azure.cosmos.cosmos_client as cosmos_client
+import sys
 
+# Set parameters
+TIME_LIMIT = 3600
+WAIT_TIME = 4
+
+# Get local folder and add project folder to PATH
 start_time = time.time()
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-# fetch working directory path
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
+# Import custom modules
+from utils.scraping import update_time
+
+dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -199,8 +206,6 @@ for url in urllist:
     except Exception:
         pass
     if result['name'] != '' and result['eventurl'] != '':
-        elapsed_time = int(time.time() - start_time)
-        print(str(elapsed_time) + ' seconds elapsed.')
         print(result['name'])
         try:
             item1 = client.CreateItem(
@@ -209,3 +214,5 @@ for url in urllist:
             time.sleep(20)
             item1 = client.CreateItem(
                 os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), result)
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
