@@ -1,38 +1,28 @@
 # Import modules
 import azure.cosmos.cosmos_client as cosmos_client
-from selenium import webdriver
 from datetime import datetime
+from bs4 import BeautifulSoup
 import os
-import glob
-import random
 import re
 import json
 import sys
-from bs4 import BeautifulSoup
 import time
 import socket
 import requests
-from selenium.webdriver.firefox.options import Options
 
-# Get local folder
+# Set parameters
+TIME_LIMIT = 120
+WAIT_TIME = 3600
+
+# Get local folder and add project folder to PATH
 start_time = time.time()
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
-sys.path.append(workingdir)
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-# Create temp log folder
-current_directory = os.getcwd()
-final_directory = os.path.join(current_directory, r'log')
-if not os.path.exists(final_directory):
-    os.makedirs(final_directory)
-for logfile in glob.glob(workingdir + 'log\\geckodriver_*.log'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
+# Import custom modules
+from utils.scraping import headless_browser, update_time
 
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -75,14 +65,11 @@ except Exception:
 print('scraping eventbrite.com for events')
 dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 myregex = re.compile(r'/d/.+?/events/')
-options = Options()
-options.add_argument("--headless")
-firefox_profile = webdriver.FirefoxProfile()
-firefox_profile.set_preference("permissions.default.stylesheet", 2)
-firefox_profile.set_preference("permissions.default.image", 2)
-firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
-browser = webdriver.Firefox(firefox_profile=firefox_profile, options=options,
-                            service_log_path=workingdir + 'log\\geckodriver_' + str(int(random.random() * 1000000)) + '.log')
+
+# Start headless browser and fetch page info
+browser = headless_browser()
+useragent = browser.execute_script("return navigator.userAgent;")
+
 srcurl = 'https://www.eventbrite.com/directory/sitemap/'
 print(str(dtg) + ': ' + srcurl)
 time.sleep(4)
@@ -96,25 +83,14 @@ soup = BeautifulSoup(src, 'html.parser')
 urls = []
 for a1 in soup.find_all('a'):
     try:
-        if myregex.match(a1['href']) and '/russian-federation' not in a1['href'] and '/china' not in a1['href'] and '/pakistan' not in a1['href']:
-            urls += ['https://www.eventbrite.com' + a1['href'].replace('/events/', '/science-and-tech--conferences/')]
+        urls += ['https://www.eventbrite.com' + a1['href'].replace('/events/', '/science-and-tech--conferences/')]
     except Exception:
         pass
 urls = list(set(urls))
 print(str(len(urls)) + ' URLs found.')
-browser.quit()
 
 # Loop through country URLs to get event URLs
-# foundurls = []
-for url1 in urls:
-    firefox_profile = webdriver.FirefoxProfile()
-    firefox_profile.set_preference("permissions.default.stylesheet", 2)
-    firefox_profile.set_preference("permissions.default.image", 2)
-    firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
-    browser = webdriver.Firefox(firefox_profile=firefox_profile, options=options,
-                                service_log_path=workingdir + 'log\\geckodriver_' + str(int(random.random() * 1000000)) + '.log')
-    useragent = browser.execute_script("return navigator.userAgent;")
-    srcurl = url1
+for srcurl in urls:
     print(str(dtg) + ': ' + srcurl)
     time.sleep(4)
     try:
@@ -134,11 +110,6 @@ for url1 in urls:
         except Exception:
             pages = 1
     print(str(pages) + ' pages found.')
-    elapsed_time = int(time.time() - start_time)
-    print(str(elapsed_time) + ' seconds elapsed. starting page number 1')
-    if elapsed_time > 180000:
-        browser.quit()
-        quit()
     for page1 in range(1, pages + 1):
         dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         jsons = []
@@ -251,13 +222,10 @@ for url1 in urls:
             time.sleep(3)
             src = browser.page_source
             soup = BeautifulSoup(src, 'html.parser')
-    browser.quit()
     print(str(len(foundurls)) + ' total records found.')
-    time.sleep(4)
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
 
-# Remove temporary logs
-for logfile in glob.glob(workingdir + 'log//geckodriver_*.txt'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
+# Finish script
+browser.quit()
+print('Script complete...')
