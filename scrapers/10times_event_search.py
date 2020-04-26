@@ -1,26 +1,23 @@
 # Import modules
 import azure.cosmos.cosmos_client as cosmos_client
-from selenium import webdriver
 from datetime import datetime
-import os
-import glob
-import random
-from random import shuffle
-import sys
 from bs4 import BeautifulSoup
+from random import shuffle
+import os
+import sys
 import time
 import socket
 import requests
-from selenium.webdriver.firefox.options import Options
-import logging
-from selenium.webdriver.remote.remote_connection import LOGGER
 
-# Notes on 10Times
+# Get local folder and add project folder to PATH
+start_time = time.time()
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-# Url Structure:
-# Conference type: https://10times.com/technology
-# location: https://10times.com/washington-us OR https://10times.com/washington-us/technology
-# Event: https://10times.com/mpls-sdn-world-congress
+# Import custom modules
+from utils.scraping import headless_browser
 
 # create list of months and countries to iterate through
 months = ['january',
@@ -110,25 +107,6 @@ countries = ['usa',
 
 shuffle(months)
 shuffle(countries)
-start_time = time.time()
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
-
-sys.path.append(workingdir)
-
-current_directory = os.getcwd()
-final_directory = os.path.join(current_directory, r'log')
-if not os.path.exists(final_directory):
-    os.makedirs(final_directory)
-
-for logfile in glob.glob(workingdir + 'log\\geckodriver_*.log'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
 
 # establish configuration json and establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -176,16 +154,8 @@ print(str(len(eventurls)) + ' URLs found.')
 
 # iterate through countries
 for c1 in countries:
-    # set selenium browser and profile defaults
-    LOGGER.setLevel(logging.WARNING)
-    options = Options()
-    options.add_argument("--headless")
-    firefox_profile = webdriver.FirefoxProfile()
-    firefox_profile.set_preference("permissions.default.stylesheet", 2)
-    firefox_profile.set_preference("permissions.default.image", 2)
-    firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
-    browser = webdriver.Firefox(firefox_profile=firefox_profile, options=options,
-                                service_log_path=workingdir + 'log\\geckodriver_' + str(int(random.random() * 1000000)) + '.log')
+    # Start headless browser and fetch page info
+    browser = headless_browser()
     useragent = browser.execute_script("return navigator.userAgent;")
     # iterate through months
     for m1 in months:
@@ -258,6 +228,12 @@ for c1 in countries:
                     t4 + ' ' + t5 + ' ' + t6, '%d %b %Y').strftime("%Y-%m-%d %H:%M:%S")
             except Exception:
                 pass
+            if startDate == '':
+                try:
+                    startDate = box.find('data', attrs={"class": "eventTime"})['data-start-date'] + ' 00:00:00'
+                    endDate = box.find('data', attrs={"class": "eventTime"})['data-end-date'] + ' 00:00:00'
+                except Exception:
+                    pass
             try:
                 locality = box.find_all('td')[2].text.strip()
                 country = box.find_all('td')[2].find(
@@ -287,9 +263,3 @@ for c1 in countries:
     time.sleep(4)
     browser.quit()
     time.sleep(4)
-
-for logfile in glob.glob(workingdir + 'log//geckodriver_*.txt'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
