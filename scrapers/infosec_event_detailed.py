@@ -11,7 +11,7 @@ import json
 import azure.cosmos.cosmos_client as cosmos_client
 import country_converter as coco
 
-historic = True
+historic = False
 
 start_time = time.time()
 dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -149,6 +149,8 @@ for url in urllist:
     try:
         result['twitter'] = soup.find("a", href=re.compile(
             "https://twitter.com/"))['href'].split('twitter.com/')[1].split('?')[0]
+        if result['twitter'] == 'share':
+            result['twitter'] = ''
     except Exception:
         pass
     # Parse categories
@@ -190,6 +192,18 @@ for url in urllist:
             'nd,', '').replace('rd,', ''), '%B %d %Y').strftime("%Y-%m-%d %H:%M:%S")
     except Exception:
         endDate = startDate
+    if startDate == '':
+        try:
+            startDate = soup.find('header', attrs={'class': 'entry-header'}).find(
+                'i', attrs={'class': 'icon-calendar'}).parent.get_text('\n').split('\n')[0].strip().split('-')[0].strip()
+            startDate = datetime.strptime(startDate.replace('th,', '').replace(
+                'st,', '').replace('nd,', '').replace('rd,', ''), '%B %d %Y').strftime("%Y-%m-%d %H:%M:%S")
+            endDate = soup.find('header', attrs={'class': 'entry-header'}).find(
+                'i', attrs={'class': 'icon-calendar'}).parent.get_text('\n').split('\n')[0].strip().split('-')[-1].strip()
+            endDate = datetime.strptime(endDate.replace('th,', '').replace('st,', '').replace(
+                'nd,', '').replace('rd,', ''), '%B %d %Y').strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            endDate = startDate
     result['startDate'] = startDate
     result['endDate'] = endDate
     print(startDate, endDate)
