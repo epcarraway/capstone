@@ -177,7 +177,7 @@ for url in urllist:
         pass
     try:
         result['streetAddress'] = json.loads(soup.find_all("script", attrs={
-                                             "type": "application/ld+json"})[0].text, strict=False)['location']['address'].strip()
+                                             "type": "application/ld+json"})[0].text, strict=False)['location']['address'].strip().split('\n')[0]
     except Exception:
         pass
     try:
