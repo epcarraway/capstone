@@ -12,13 +12,6 @@ import azure.cosmos.cosmos_client as cosmos_client
 start_time = time.time()
 dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# fetch working directory path
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
-
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(
     url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
