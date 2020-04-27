@@ -6,18 +6,22 @@ from random import shuffle
 import os
 import sys
 import time
-import socket
-import requests
+
+# Set parameters
+TIME_LIMIT = 7200
+WAIT_TIME = 4
 
 # Get local folder and add project folder to PATH
-start_time = time.time()
 workingdir = os.getcwd()
 sys.path.insert(0, workingdir)
 parentdir = os.path.dirname(workingdir)
 sys.path.insert(0, parentdir)
 
 # Import custom modules
-from utils.scraping import headless_browser
+from utils.scraping import headless_browser, update_time, scraper_info
+
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # create list of months and countries to iterate through
 months = ['january',
@@ -112,20 +116,6 @@ shuffle(countries)
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
                                     'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
 
-# Get scraper info
-try:
-    scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-except Exception:
-    pass
-try:
-    hostname = socket.gethostname()
-except Exception:
-    pass
-try:
-    scriptname = os.path.basename(__file__)
-except Exception:
-    pass
-
 print(str(len(countries)) + ' countries found.')
 print('scraping 10times.com for events')
 eventurls = []
@@ -152,11 +142,12 @@ for item in iter(result_iterable):
 eventurls = list(set(eventurls))
 print(str(len(eventurls)) + ' URLs found.')
 
+# Start headless browser and fetch page info
+browser = headless_browser(__file__)
+useragent = browser.execute_script("return navigator.userAgent;")
+
 # iterate through countries
 for c1 in countries:
-    # Start headless browser and fetch page info
-    browser = headless_browser()
-    useragent = browser.execute_script("return navigator.userAgent;")
     # iterate through months
     for m1 in months:
         dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -177,8 +168,6 @@ for c1 in countries:
         src = browser.page_source
         soup = BeautifulSoup(src, 'html.parser')
         pagetitle = soup.title.text
-        elapsed_time = int(time.time() - start_time)
-        print(str(elapsed_time) + ' seconds elapsed.')
         # find and iterate through individual result entry blocks
         boxes = soup.find_all("tr", attrs={"class": "box"})
         print(str(len(boxes)) + ' events found on page...')
@@ -260,6 +249,8 @@ for c1 in countries:
                         'scriptname': scriptname,
                         'dtg': dtg})
     print(str(len(eventurls)) + ' total records found.')
-    time.sleep(4)
-    browser.quit()
-    time.sleep(4)
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
+
+# Clean up and end script
+print('Script complete...')

@@ -1,48 +1,34 @@
 # Import modules
 import azure.cosmos.cosmos_client as cosmos_client
 from datetime import datetime
+from bs4 import BeautifulSoup
 import os
 import glob
 import json
 import sys
-from bs4 import BeautifulSoup
 import time
-import socket
-from urllib import request
 import requests
 
-historic = True
+# Set parameters
+TIME_LIMIT = 7200
+WAIT_TIME = 4
+HISTORIC = False
 
-# Set working directory
-start_time = time.time()
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
+# Get local folder and add project folder to PATH
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-sys.path.append(workingdir)
+# Import custom modules
+from utils.scraping import update_time, scraper_info
 
-current_directory = os.getcwd()
-final_directory = os.path.join(current_directory, r'log')
-if not os.path.exists(final_directory):
-    os.makedirs(final_directory)
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
-for logfile in glob.glob(workingdir + 'log\\geckodriver_*.log'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
-
-# establish configuration json and establish connection to CosmosDB
+# Establish configuration json and establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
                                     'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
-
-# create base metadata for scraping output
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-hostname = socket.gethostname()
-scriptname = os.path.basename(__file__)
 
 print('scraping tulu.la for events')
 eventurls = []
@@ -69,7 +55,7 @@ for item in iter(result_iterable):
 eventurls = list(set(eventurls))
 print(str(len(eventurls)) + ' URLs found.')
 
-if historic is True:
+if HISTORIC is True:
     srcurl = 'https://tulu.la/events/?past=show'
 else:
     srcurl = 'https://tulu.la/events/'
@@ -102,7 +88,7 @@ for c1 in range(num1):
     pagetitle = soup.title.text
     elapsed_time = int(time.time() - start_time)
     print(str(elapsed_time) + ' seconds elapsed.')
-    # find and iterate through individual result entry JSONs
+    # Find and iterate through individual result entry JSONs
     jsons = soup.find_all("script", attrs={"type": "application/ld+json"})
     print(str(len(jsons) - 1) + ' events found on page...')
     for json1 in jsons[1:]:
@@ -148,7 +134,7 @@ for c1 in range(num1):
                 'location']['address']['postalCode'].strip()
         except Exception:
             pass
-        # store found item in CosmosDB if correctly parsed and not already scraped
+        # Store found item in CosmosDB if correctly parsed and not already scraped
         if name != '' and eventurl != '':
             if eventurl not in eventurls:
                 eventurls = eventurls + [eventurl]
@@ -169,7 +155,7 @@ for c1 in range(num1):
                     'hostname': hostname,
                     'scriptname': scriptname,
                     'dtg': dtg})
-    if historic is True:
+    if HISTORIC is True:
         srcurl = 'https://tulu.la/events/?page=' + str(c1 + 1) + '&past=show'
     else:
         srcurl = 'https://tulu.la/events/?page=' + str(c1 + 1)
@@ -180,10 +166,8 @@ for c1 in range(num1):
         event_page = requests.get(srcurl).content
     soup = BeautifulSoup(event_page, 'html.parser')
     print(str(len(eventurls)) + ' total records found.')
-    time.sleep(4)
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
 
-for logfile in glob.glob(workingdir + 'log//geckodriver_*.txt'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
+# Clean up and end script
+print('Script complete...')

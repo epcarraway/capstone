@@ -2,7 +2,6 @@
 import azure.cosmos.cosmos_client as cosmos_client
 from datetime import datetime
 from bs4 import BeautifulSoup
-import socket
 import requests
 import os
 import time
@@ -15,16 +14,16 @@ TIME_LIMIT = 3600
 WAIT_TIME = 4
 
 # Get local folder and add project folder to PATH
-start_time = time.time()
 workingdir = os.getcwd()
 sys.path.insert(0, workingdir)
 parentdir = os.path.dirname(workingdir)
 sys.path.insert(0, parentdir)
 
 # Import custom modules
-from utils.scraping import update_time
+from utils.scraping import update_time, scraper_info
 
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -74,20 +73,6 @@ print(str(len(urllist2)) + ' URLs already scraped.')
 
 urllist = list(set(urllist) - set(urllist2))
 print(str(len(urllist)) + ' URLs to be scraped.')
-
-# Get scraper info
-try:
-    scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-except Exception:
-    pass
-try:
-    hostname = socket.gethostname()
-except Exception:
-    pass
-try:
-    scriptname = os.path.basename(__file__)
-except Exception:
-    pass
 
 random.shuffle(urllist)
 tc = 0
@@ -216,3 +201,6 @@ for url in urllist:
                 os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), result)
     # Increment and show elapsed time until limit reached
     update_time(start_time, TIME_LIMIT, WAIT_TIME)
+
+# Clean up and end script
+print('Script complete...')

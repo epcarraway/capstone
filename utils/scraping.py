@@ -11,16 +11,18 @@ import os
 import sys
 import time
 import platform
+import requests
+import socket
 import re
 
-def headless_browser():
+
+def headless_browser(fn):
     """Creates headless browser"""
     # Set directories for browser and logs
-    workingdir = os.path.dirname(os.path.realpath(__file__))
+    workingdir = os.path.dirname(os.path.realpath(fn))
     print('Appending {} to PATH...'.format(workingdir))
     sys.path.append(workingdir)
-    current_directory = os.getcwd()
-    final_directory = os.path.join(current_directory, r'log')
+    final_directory = os.path.join(workingdir, r'log')
     # Create log folder if it doesn't exist and remove old logs
     if not os.path.exists(final_directory):
         os.makedirs(final_directory)
@@ -53,7 +55,7 @@ def headless_browser():
     # Start browser
     browser = webdriver.Firefox(firefox_profile=firefox_profile, options=options,
                                 service_log_path=logname, 
-                                executable_path=os.path.join(current_directory, exec_name))
+                                executable_path=os.path.join(workingdir, exec_name))
     browser.implicitly_wait(10)
     return browser
 
@@ -137,3 +139,24 @@ def date_parse(dateraw):
     endDate = datetime.strptime(str(
         day2) + ' ' + str(mon2) + ' ' + str(year2), '%d %b %Y').strftime("%Y-%m-%d %H:%M:%S")
     return(startDate, endDate)
+
+
+def scraper_info(fn):
+    """Sets scraper metadata"""
+    print('Getting scraper info...')
+    try:
+        scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
+    except Exception:
+        scraperip = ''
+    try:
+        hostname = socket.gethostname()
+    except Exception:
+        hostname = ''
+    try:
+        scriptname = os.path.basename(fn)
+    except Exception:
+        scriptname = ''
+    dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    start_time = time.time()
+    print('IP: {}; Host: {}; script: {}; DTG: {}'.format(scraperip, hostname, scriptname, dtg))
+    return scraperip, hostname, scriptname, dtg, start_time

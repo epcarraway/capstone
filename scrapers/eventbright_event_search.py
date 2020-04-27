@@ -7,22 +7,22 @@ import re
 import json
 import sys
 import time
-import socket
-import requests
 
 # Set parameters
-TIME_LIMIT = 3600
+TIME_LIMIT = 7200
 WAIT_TIME = 4
 
 # Get local folder and add project folder to PATH
-start_time = time.time()
 workingdir = os.getcwd()
 sys.path.insert(0, workingdir)
 parentdir = os.path.dirname(workingdir)
 sys.path.insert(0, parentdir)
 
 # Import custom modules
-from utils.scraping import headless_browser, update_time
+from utils.scraping import headless_browser, update_time, scraper_info
+
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -47,27 +47,12 @@ for item in iter(result_iterable):
         pass
 foundurls = urllist.copy()
 
-# Get scraper info
-try:
-    scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-except Exception:
-    pass
-try:
-    hostname = socket.gethostname()
-except Exception:
-    pass
-try:
-    scriptname = os.path.basename(__file__)
-except Exception:
-    pass
-
 # Get list of cities and generate URLs
 print('scraping eventbrite.com for events')
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 myregex = re.compile(r'/d/.+?/events/')
 
 # Start headless browser and fetch page info
-browser = headless_browser()
+browser = headless_browser(__file__)
 useragent = browser.execute_script("return navigator.userAgent;")
 
 srcurl = 'https://www.eventbrite.com/directory/sitemap/'

@@ -1,27 +1,33 @@
 # Import modules
+import azure.cosmos.cosmos_client as cosmos_client
+from datetime import datetime
+from bs4 import BeautifulSoup
+import country_converter as coco
 import socket
 import requests
+import sys
 import os
 import re
-from datetime import datetime
 import time
 import random
-from bs4 import BeautifulSoup
 import json
-import azure.cosmos.cosmos_client as cosmos_client
-import country_converter as coco
 
-historic = False
+# Set parameters
+TIME_LIMIT = 7200
+WAIT_TIME = 4
+HISTORIC = False
 
-start_time = time.time()
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# Get local folder and add project folder to PATH
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-# Fetch working directory path
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
+# Import custom modules
+from utils.scraping import update_time, scraper_info
+
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # Create Cosmos DB client
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -47,26 +53,12 @@ for item in iter(result_iterable):
 urllist2 = list(set(urllist2))
 print(str(len(urllist2)) + ' URLs already scraped.')
 
-# Get scraper info
-try:
-    scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-except Exception:
-    pass
-try:
-    hostname = socket.gethostname()
-except Exception:
-    pass
-try:
-    scriptname = os.path.basename(__file__)
-except Exception:
-    pass
-
 # Fetch search page URLs
 useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0'
 srcurls = ['https://infosec-conferences.com/category/conference-' + datetime.now().strftime("%Y") + '/?fwp_load_more=300',
            'https://infosec-conferences.com/filter/?fwp_load_more=300']
 
-if historic is True:
+if HISTORIC is True:
     srcurls += ['https://infosec-conferences.com/filter/?fwp_date=%2C' + datetime.now().strftime("%Y-%m-%d") + '&fwp_load_more=500']
 
 urllist = []
@@ -235,9 +227,8 @@ for url in urllist:
         pass
     if result['name'] != '' and result['eventurl'] != '' and result['latitude'] != '':
         print(result['name'])
-        elapsed_time = int(time.time() - start_time)
         urllist2 += [result['eventurl']]
-        print(str(elapsed_time) + ' seconds elapsed. ' + str(len(urllist2)) + ' total events scraped.')
+        print(str(len(urllist2)) + ' total events scraped.')
         # Save result to Cosmos DB
         try:
             item1 = client.CreateItem(
@@ -246,3 +237,8 @@ for url in urllist:
             time.sleep(20)
             item1 = client.CreateItem(
                 os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), result)
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
+
+# Clean up and end script
+print('Script complete...')

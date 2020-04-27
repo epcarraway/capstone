@@ -15,14 +15,16 @@ TIME_LIMIT = 3600
 WAIT_TIME = 4
 
 # Get local folder and add project folder to PATH
-start_time = time.time()
 workingdir = os.getcwd()
 sys.path.insert(0, workingdir)
 parentdir = os.path.dirname(workingdir)
 sys.path.insert(0, parentdir)
 
 # Import custom modules
-from utils.scraping import headless_browser, date_parse, update_time
+from utils.scraping import headless_browser, date_parse, update_time, scraper_info
+
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # Define search paramaters
 search_list = ['technology conference',
@@ -48,12 +50,6 @@ search_list = ['technology conference',
                'IoT conference',
                '5G conference']
 shuffle(search_list)
-
-# Create base metadata for scraping output
-start_time = time.time()
-scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-hostname = socket.gethostname()
-scriptname = os.path.basename(__file__)
 
 # Establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
@@ -83,7 +79,7 @@ eventurls = list(set(eventurls))
 print(str(len(eventurls)) + ' URLs found in database...')
 
 # Start headless browser and fetch page info
-browser = headless_browser()
+browser = headless_browser(__file__)
 useragent = browser.execute_script("return navigator.userAgent;")
 
 results = []

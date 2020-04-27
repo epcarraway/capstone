@@ -1,55 +1,34 @@
 # Import modules
 import azure.cosmos.cosmos_client as cosmos_client
 from datetime import datetime
+from bs4 import BeautifulSoup
 import os
 import glob
 import random
 import sys
-from bs4 import BeautifulSoup
 import time
-import socket
 import requests
 
-historic = False
+# Set parameters
+TIME_LIMIT = 7200
+WAIT_TIME = 4
+HISTORIC = False
 
-# Set working directory
-start_time = time.time()
-workingdir = os.path.dirname(os.path.realpath(__file__))
-if '/' in workingdir:
-    workingdir = workingdir + '/'
-else:
-    workingdir = workingdir + '\\'
+# Get local folder and add project folder to PATH
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
-sys.path.append(workingdir)
+# Import custom modules
+from utils.scraping import update_time, scraper_info
 
-current_directory = os.getcwd()
-final_directory = os.path.join(current_directory, r'log')
-if not os.path.exists(final_directory):
-    os.makedirs(final_directory)
-
-for logfile in glob.glob(workingdir + 'log\\geckodriver_*.log'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
+# Get scraper info
+scraperip, hostname, scriptname, dtg, start_time = scraper_info(__file__)
 
 # establish configuration json and establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
                                     'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
-
-# Get scraper info
-try:
-    scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
-except Exception:
-    pass
-try:
-    hostname = socket.gethostname()
-except Exception:
-    pass
-try:
-    scriptname = os.path.basename(__file__)
-except Exception:
-    pass
 
 print('scraping eventil.com for events')
 eventurls = []
@@ -76,7 +55,7 @@ for item in iter(result_iterable):
 eventurls = list(set(eventurls))
 print(str(len(eventurls)) + ' URLs found.')
 
-if historic is True:
+if HISTORIC is True:
     srcurl = 'https://eventil.com/events?q%5Bpast%5D=true'
 else:
     srcurl = 'https://eventil.com/events/'
@@ -178,7 +157,7 @@ for c1 in range(1, num1):
                     'hostname': hostname,
                     'scriptname': scriptname,
                     'dtg': dtg})
-    if historic is True:
+    if HISTORIC is True:
         srcurl = 'https://eventil.com/events?page=' + str(c1 + 1) + '&q%5Bpast%5D=true'
     else:
         srcurl = 'https://eventil.com/events/?page=' + str(c1 + 1)
@@ -189,4 +168,8 @@ for c1 in range(1, num1):
         event_page = requests.get(srcurl).content
     soup = BeautifulSoup(event_page, 'html.parser')
     print(str(len(eventurls)) + ' total records found.')
-    time.sleep(4 + int(random.random() * 2))
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
+
+# Clean up and end script
+print('Script complete...')
