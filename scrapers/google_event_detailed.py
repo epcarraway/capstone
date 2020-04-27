@@ -1,85 +1,28 @@
 # Import modules
 import azure.cosmos.cosmos_client as cosmos_client
-from selenium import webdriver
 from bs4 import BeautifulSoup
-import os
-import glob
 from random import shuffle
+from datetime import datetime
+import os
 import json
 import sys
 import requests
-from datetime import datetime
 import time
 import socket
-from urllib import request
-from selenium.webdriver.firefox.options import Options
-import logging
-from selenium.webdriver.remote.remote_connection import LOGGER
 
+# Set parameters
+TIME_LIMIT = 3600
+WAIT_TIME = 4
 
-def dateParse(dateraw):
-    # Define function to parse raw text date range strings from Google
-    d1 = dateraw.split(' – ')[0]
-    d2 = dateraw.split(' – ')[-1]
-    d1 = d1.replace('Mon, ', '').replace('Tue, ', '').replace('Wed, ', '').replace(
-        'Thu, ', '').replace('Fri, ', '').replace('Sat, ', '').replace('Sun, ', '')
-    d2 = d2.replace('Mon, ', '').replace('Tue, ', '').replace('Wed, ', '').replace(
-        'Thu, ', '').replace('Fri, ', '').replace('Sat, ', '').replace('Sun, ', '')
-    if ',' in d2 and ('PM' in d2 or 'AM' in d2):
-        try:
-            year2 = int(d2.split(', ')[-2].strip())
-        except Exception:
-            year2 = int(datetime.now().strftime("%Y"))
-    else:
-        try:
-            year2 = int(d2.split(', ')[-1].strip())
-        except Exception:
-            year2 = int(datetime.now().strftime("%Y"))
-    if ' ' in d1:
-        mon1 = d1.split(' ')[0].split(',')[0]
-        day1 = d1.split(' ')[1].split(',')[0]
-        if ', ' in d1:
-            if '20' in d1.split(', ')[1]:
-                try:
-                    year1 = int(d1.split(', ')[1])
-                except Exception:
-                    year1 = year2
-            else:
-                year1 = year2
-        else:
-            year1 = year2
-    if ' ' in d2:
-        try:
-            try:
-                day2 = int(d2.split(',')[0].split(' ')[1])
-            except Exception:
-                day2 = int(d2.split(',')[0].split(' ')[0])
-            try:
-                mon2 = d2.split(',')[0].split(' ')[0]
-            except Exception:
-                mon2 = mon1
-        except Exception:
-            day2 = day1
-            mon2 = mon1
-    test1 = False
-    try:
-        test1 = int(mon2) < 60
-    except Exception:
-        test1 = False
-    if test1 is True:
-        mon2 = mon1
-    if 'PM' in d2.split(',')[0] or 'AM' in d2.split(',')[0]:
-        day2 = day1
-        mon2 = mon1
-    if datetime.strptime(str(day1) + ' ' + str(mon1) + ' ' + str(year1), '%d %b %Y') - datetime.now() < datetime.timedelta(days=-10):
-        year2 += 1
-        year1 += 1
-    startDate = datetime.strptime(str(
-        day1) + ' ' + str(mon1) + ' ' + str(year1), '%d %b %Y').strftime("%Y-%m-%d %H:%M:%S")
-    endDate = datetime.strptime(str(
-        day2) + ' ' + str(mon2) + ' ' + str(year2), '%d %b %Y').strftime("%Y-%m-%d %H:%M:%S")
-    return(startDate, endDate)
+# Get local folder and add project folder to PATH
+start_time = time.time()
+workingdir = os.getcwd()
+sys.path.insert(0, workingdir)
+parentdir = os.path.dirname(workingdir)
+sys.path.insert(0, parentdir)
 
+# Import custom modules
+from utils.scraping import headless_browser, date_parse, update_time
 
 # Define search paramaters
 search_list = ['technology conference',
@@ -108,7 +51,6 @@ shuffle(search_list)
 
 # Create base metadata for scraping output
 start_time = time.time()
-dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 scraperip = requests.get('https://api.ipify.org/').content.decode('utf8')
 hostname = socket.gethostname()
 scriptname = os.path.basename(__file__)
@@ -116,29 +58,6 @@ scriptname = os.path.basename(__file__)
 # Establish connection to CosmosDB
 client = cosmos_client.CosmosClient(url_connection=os.environ['AZURE_COSMOS_ENDPOINT'].replace('-', '='), auth={
                                     'masterKey': os.environ['AZURE_COSMOS_MASTER_KEY'].replace('-', '=')})
-
-# Get local working directory
-try:
-    workingdir = os.path.dirname(os.path.realpath(__file__))
-    if '/' in workingdir:
-        workingdir = workingdir + '/'
-    else:
-        workingdir = workingdir + '\\'
-except Exception:
-    workingdir = '\\'
-sys.path.append(workingdir)
-
-# Establish temporary log directory for web driver
-current_directory = os.getcwd()
-final_directory = os.path.join(current_directory, r'log')
-if not os.path.exists(final_directory):
-    os.makedirs(final_directory)
-
-for logfile in glob.glob(workingdir + 'log\\geckodriver_*.log'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
 
 print('scraping google.com for events')
 eventurls = []
@@ -163,17 +82,9 @@ for item in iter(result_iterable):
 eventurls = list(set(eventurls))
 print(str(len(eventurls)) + ' URLs found in database...')
 
-# Set selenium browser and profile defaults
-LOGGER.setLevel(logging.WARNING)
-f_options = Options()
-f_options.add_argument("--headless")
-firefox_profile = webdriver.FirefoxProfile()
-firefox_profile.set_preference("permissions.default.stylesheet", 2)
-firefox_profile.set_preference("permissions.default.image", 2)
-firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
-browser = webdriver.Firefox(firefox_profile=firefox_profile, options=f_options)
+# Start headless browser and fetch page info
+browser = headless_browser()
 useragent = browser.execute_script("return navigator.userAgent;")
-browser.implicitly_wait(10)
 
 results = []
 
@@ -246,7 +157,7 @@ for search_item in search_list:
         if 'workshop' in result['name'].lower() or 'boot camp' in result['name'].lower() or 'bootcamp' in result['name'].lower() or 'training' in result['name'].lower() or 'meetup' in result['name'].lower() or 'networking event' in result['name'].lower():
             result['name'] == ''
         else:
-            # Drop 10times / eventbrite items and items with no locations
+            # Drop items with no locations
             if result['ludocid'] != '' and not result['eventurl'] in eventurls and not ('https://10times.com/' in str(rbox) or 'https://www.eventbrite.com/' in str(rbox)):
                 print(result['ludocid'])
                 # Extract location information from Google maps API
@@ -288,7 +199,7 @@ for search_item in search_list:
                 del result['street_number']
                 # Parse date range
                 try:
-                    result['startDate'], result['endDate'] = dateParse(
+                    result['startDate'], result['endDate'] = date_parse(
                         result['date'])
                     del result['date']
                 except Exception:
@@ -296,8 +207,6 @@ for search_item in search_list:
                 if result['name'] != '' and result['eventurl'] != '':
                     if not result['eventurl'] in eventurls:
                         eventurls = eventurls + [result['eventurl']]
-                        elapsed_time = int(time.time() - start_time)
-                        print(str(elapsed_time) + ' seconds elapsed.')
                         print(result['name'])
                         # Store result in Cosmos DB
                         try:
@@ -309,13 +218,9 @@ for search_item in search_list:
                                 os.environ['AZURE_COSMOS_CONTAINER_PATH'].replace('-', '='), result)
                 # Append results to list
                 results += [result]
+    # Increment and show elapsed time until limit reached
+    update_time(start_time, TIME_LIMIT, WAIT_TIME)
 
-# Clean up browser
+# Clean up and end script
 print('finishing...', len(results), 'results found...')
 browser.quit()
-time.sleep(2)
-for logfile in glob.glob(workingdir + 'log//geckodriver_*.txt'):
-    try:
-        os.remove(logfile)
-    except Exception:
-        pass
