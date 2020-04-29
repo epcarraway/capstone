@@ -38,18 +38,18 @@
             yearStart++;
         }
     </script>
-        <div class="container"> 
+        <div class="container" style="min-width:1024px"> 
             <h2 align="center" style="padding-top:30px;">Geographic Trends</h2><br />  
             <p style="padding-top:20px;">These visualizations demonstrate where technology conferences and similar events have taken place over the last ten years. London has consistently been a primary location for technology conferences, followed closely by New York City and San Fransisco. Based on the sun burst chart you can see that the United States has a significant amount of technology conferences distributed across numerous cities and states. California alone has nearly as many events as the United Kingdom. The visualizations below show the top 50 cities around the world for technology conferences and can be animated to show how these have shifted over time.
             </p>
         </div>
         <!-- Chart Area -->
-        <div class="container"> 
+        <div class="container" style="min-width:1024px"> 
             {{bardata | safe}}
         </div>
         <br />  
       <div class="jumbotron1">
-        <div class="container">
+        <div class="container" style="min-width:1024px">
           <h3 id="title_div" style="text-align:center;padding-top:5px;"></h3>
           <div class="mr-md-3 pt-3 px-3 pt-md-5 px-md-5 svg-container" id="total_div"></div>
           <p style="text-align:right;padding-top:5px;">** Based on unique conferences</p>
@@ -74,13 +74,13 @@
         </div>
       </div>
 	  <!-- Leaflet Map Area -->
-	  <div class="container"> 
-	  <h3 align="center">City Conference Map</h2><br />
-	  <div id="mapid" style="height:600px;width:1100px;align:center;padding-top:5px;padding-bottom:5px;"></div>
-      </div>
+	  <div class="container" style="min-width:1024px"> 
+        <h3 align="center">City Conference Map</h2><br />
+        <div id="mapid" style="height:600px;width:1000px;align:center;padding-top:5px;padding-bottom:5px;"></div>
+        </div>
 	  <hr> 
 	  <!-- DataTable Area -->
-	  <div class="container">  
+	  <div class="container" style="min-width:1024px">  
 		<h3 align="center">City Conference Source Data</h2><br />  
 		<table id="data-table" class="display" style="width:100%">
 			<thead>

@@ -478,9 +478,6 @@ def polar_day_month(df, div=True):
     return output
 
 
-
-
-
 def load_static_cal_map():
     '''Function to loading static calendar heatmap for trends'''
     # Select model for categorization
