@@ -64,6 +64,12 @@ def processing():
     return render_template('processing.html')
 
 
+@app.route('/datamining')
+@cache.cached(timeout=600)
+def datamining():
+    return render_template('datamining.html')
+
+
 @app.route('/e/<event>')
 @cache.cached(timeout=600, query_string=True)
 def showevent(event):
