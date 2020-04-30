@@ -16,7 +16,7 @@ import socket
 import re
 
 
-def headless_browser(fn):
+def headless_browser(fn, demo=False):
     """Creates headless browser"""
     # Set directories for browser and logs
     workingdir = os.path.dirname(os.path.realpath(fn))
@@ -40,8 +40,9 @@ def headless_browser(fn):
     options.add_argument("--headless")
     firefox_profile = webdriver.FirefoxProfile()
     firefox_profile.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:75.0) Gecko/20100101 Firefox/75.0")
-    firefox_profile.set_preference("permissions.default.stylesheet", 2)
-    firefox_profile.set_preference("permissions.default.image", 2)
+    if not demo:
+        firefox_profile.set_preference("permissions.default.stylesheet", 2)
+        firefox_profile.set_preference("permissions.default.image", 2)
     firefox_profile.set_preference("browser.privatebrowsing.autostart", True)
     # Determine platform to select geckodriver executable
     plat = platform.platform()
@@ -141,7 +142,7 @@ def date_parse(dateraw):
     return(startDate, endDate)
 
 
-def scraper_info(fn):
+def scraper_info(fn, demo=False):
     """Sets scraper metadata"""
     print('Getting scraper info...')
     try:
@@ -158,5 +159,8 @@ def scraper_info(fn):
         scriptname = ''
     dtg = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     start_time = time.time()
-    print('IP: {}; Host: {}; script: {}; DTG: {}'.format(scraperip, hostname, scriptname, dtg))
+    if demo:
+        print('IP: XXX.XXX.XXX.XXX; Host: XXXX; script: {}; DTG: {}'.format(scriptname, dtg))
+    else:
+        print('IP: {}; Host: {}; script: {}; DTG: {}'.format(scraperip, hostname, scriptname, dtg))
     return scraperip, hostname, scriptname, dtg, start_time
