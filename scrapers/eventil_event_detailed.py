@@ -174,6 +174,8 @@ for url in urllist:
     try:
         result['twitter'] = '@' + soup.find(
             "i", attrs={"class": "fa-twitter"}).parent['href'].split('/')[-1].strip()
+        if result['twitter'] == '@eventilhq':
+            del result['twitter']
     except Exception:
         pass
     try:
