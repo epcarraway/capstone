@@ -24,3 +24,4 @@ calheatmap.png
 static/calheatmap.png
 *geckodriver*
 scrapers/geckodriver.exe
+notebooks/test.ipynb
