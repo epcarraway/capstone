@@ -5,10 +5,13 @@ pandas
 plotly
 azure-cosmos
 azure-storage-blob
+flask
 Flask-Caching
+jupyter
 requests
 nltk
 beautifulsoup4
+lxml
 python-Levenshtein
 matplotlib
 numpy
